@@ -44,7 +44,9 @@ const Dashboard = () => {
       setLoading(true);
       try {
         const data = await listListings(token, "ACTIVE");
-        setListings(data?.Payload || data?.data || []);
+        const items = data?.Payload || data?.data || [];
+        console.log("First listing:", items[0]);
+        setListings(items);
         setUsingMockData(false);
       } catch (err) {
         console.error("Error:", err);
@@ -85,7 +87,7 @@ const Dashboard = () => {
             <span aria-hidden="true">🏠</span> Mouv Africa
           </h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Welcome, User</span>
+            <span className="text-sm text-gray-600">Welcome</span>
             <button
               type="button"
               onClick={() => navigate("/profile")}
@@ -135,42 +137,121 @@ const Dashboard = () => {
               key={listing._id}
               className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
             >
-              <div
-                className="h-48 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center"
-                aria-hidden="true"
-              >
-                <span className="text-5xl">🏠</span>
-              </div>
+              {listing.images?.length > 0 ? (
+                <img
+                  src={listing.images[0].url}
+                  alt={listing.name}
+                  className="w-full h-48 object-cover"
+                />
+              ) : (
+                <div
+                  className="h-48 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center"
+                  aria-hidden="true"
+                >
+                  <span className="text-5xl">🏠</span>
+                </div>
+              )}
               <div className="p-4">
-                <h3 className="font-semibold text-gray-900 text-lg mb-1">
-                  {listing.name || "Unnamed Listing"}
-                </h3>
-                <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-bold text-xl text-gray-900">
+                      {listing.name || "Unnamed Listing"}
+                    </h3>
+
+                    <p className="text-sm text-gray-500 mt-1">
+                      {listing.location?.buildingName || "Unknown Building"}
+                    </p>
+
+                    <p className="text-sm text-gray-500">
+                      {listing.location?.cityTown || "Unknown Location"}
+                    </p>
+                  </div>
+
+                  <span
+                    className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full"
+                    aria-label={`Listing status: ${listing.status || "Unknown"}`}
+                  >
+                    {listing.status || "Unknown"}
+                  </span>
+                </div>
+
+                <p className="text-sm text-gray-600 line-clamp-3 mt-4">
                   {listing.description || "No description available"}
                 </p>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                    {listing.listingStatus || "Unknown"}
-                  </span>
-                  {listing.furnishStatus && (
-                    <span className="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full">
-                      {listing.furnishStatus}
+
+                <div
+                  className="grid grid-cols-3 gap-3 mt-5 border border-gray-200 rounded-lg p-3"
+                  aria-label="Property summary"
+                >
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-gray-900">
+                      {listing.details?.bedrooms ?? "-"}
+                    </p>
+                    <p className="text-xs text-gray-500">Bedrooms</p>
+                  </div>
+
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-gray-900">
+                      {listing.details?.bathrooms ?? "-"}
+                    </p>
+                    <p className="text-xs text-gray-500">Bathrooms</p>
+                  </div>
+
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-gray-900">
+                      {listing.details?.maxGuests ?? "-"}
+                    </p>
+                    <p className="text-xs text-gray-500">Guests</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mt-5">
+                  {listing.propertyType?.name && (
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                      {listing.propertyType.name}
                     </span>
                   )}
-                  {listing.price && (
-                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-semibold">
-                      ${listing.price}
+
+                  {listing.listingStatus && (
+                    <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                      {listing.listingStatus}
+                    </span>
+                  )}
+
+                  {listing.product && (
+                    <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                      {listing.product}
                     </span>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/listings/${listing._id}`)}
-                  className="w-full mt-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                  aria-label={`View details for ${listing.name || "this listing"}`}
-                >
-                  View Details <span aria-hidden="true">→</span>
-                </button>
+
+                <div className="mt-5 flex items-center justify-between">
+                  <div>
+                    {listing.pricing?.nightlyPrice != null ? (
+                      <>
+                        <p className="text-xs text-gray-500">Starting from</p>
+
+                        <p className="text-2xl font-bold text-green-700">
+                          {listing.currency?.prefix?.toUpperCase() ?? ""}{" "}
+                          {listing.pricing.nightlyPrice.toLocaleString()}
+                        </p>
+
+                        <p className="text-xs text-gray-500">per night</p>
+                      </>
+                    ) : (
+                      <p className="text-gray-500 italic">Price unavailable</p>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/listings/${listing._id}`)}
+                    className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                    aria-label={`View details for ${listing.name || "this listing"}`}
+                  >
+                    View Details <span aria-hidden="true">→</span>
+                  </button>
+                </div>
               </div>
             </li>
           ))}
