@@ -17,9 +17,13 @@ const Profile = () => {
       try {
         const data = await getUserDetails(token);
         setProfile(data?.Payload || data?.data || data);
+        console.log("User details response:", data);
       } catch (err) {
-        console.error("Error:", err);
-        setError("Couldn't load profile — showing what we know from login.");
+        console.log("Status:", err.response?.status);
+        console.log("Response:", err.response?.data);
+        console.log("Headers:", err.response?.headers);
+
+        setError("Couldn't load profile.");
       } finally {
         setLoading(false);
       }
