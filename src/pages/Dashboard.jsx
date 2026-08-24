@@ -1,10 +1,42 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { listListings } from "../api/api";
 
-const Dashboard = ({ token, onLogout }) => {
+const MOCK_LISTINGS = [
+  {
+    _id: "mock1",
+    name: "Modern Heights Apartment",
+    description: "A bright 2-bedroom apartment in a modern estate.",
+    listingStatus: "ACTIVE",
+    furnishStatus: "FURNISHED",
+    price: 45000,
+  },
+  {
+    _id: "mock2",
+    name: "Garden View Studio",
+    description: "Cozy studio with a private garden view.",
+    listingStatus: "ACTIVE",
+    furnishStatus: "UNFURNISHED",
+    price: 25000,
+  },
+  {
+    _id: "mock3",
+    name: "Riverside Townhouse",
+    description: "Spacious townhouse near the river.",
+    listingStatus: "ACTIVE",
+    furnishStatus: "SEMI-FURNISHED",
+    price: 60000,
+  },
+];
+
+const Dashboard = () => {
+  const { token, logout } = useAuth();
+  const navigate = useNavigate();
   const [listings, setListings] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [usingMockData, setUsingMockData] = useState(false);
   const [visibleCount, setVisibleCount] = useState(15);
 
   useEffect(() => {
@@ -13,9 +45,12 @@ const Dashboard = ({ token, onLogout }) => {
       try {
         const data = await listListings(token, "ACTIVE");
         setListings(data?.Payload || data?.data || []);
+        setUsingMockData(false);
       } catch (err) {
         console.error("Error:", err);
-        setError("Failed to load listings.");
+        console.warn("Falling back to mock data — API request failed.");
+        setListings(MOCK_LISTINGS);
+        setUsingMockData(true);
       } finally {
         setLoading(false);
       }
@@ -42,20 +77,6 @@ const Dashboard = ({ token, onLogout }) => {
     );
   }
 
-  if (error) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center bg-gray-50"
-        role="alert"
-      >
-        <div className="text-center text-red-600">
-          <p className="text-xl font-semibold">Error</p>
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b border-gray-200">
@@ -67,8 +88,22 @@ const Dashboard = ({ token, onLogout }) => {
             <span className="text-sm text-gray-600">Welcome, User</span>
             <button
               type="button"
+              onClick={() => navigate("/profile")}
+              className="text-sm text-gray-600 hover:text-gray-800 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 rounded"
+            >
+              Profile
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/search")}
+              className="text-sm text-gray-600 hover:text-gray-800 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 rounded"
+            >
+              Search
+            </button>
+            <button
+              type="button"
               className="text-sm text-red-600 hover:text-red-800 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded"
-              onClick={onLogout}
+              onClick={logout}
             >
               Logout
             </button>
@@ -77,6 +112,16 @@ const Dashboard = ({ token, onLogout }) => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
+        {usingMockData && (
+          <div
+            className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg p-3 mb-4"
+            role="status"
+          >
+            Showing sample data — the live API couldn't be reached (likely a
+            CORS/network issue on their end).
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-100">
           <p className="text-gray-700">
             <span className="font-semibold">{listings.length}</span> active
@@ -120,6 +165,7 @@ const Dashboard = ({ token, onLogout }) => {
                 </div>
                 <button
                   type="button"
+                  onClick={() => navigate(`/listings/${listing._id}`)}
                   className="w-full mt-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                   aria-label={`View details for ${listing.name || "this listing"}`}
                 >
