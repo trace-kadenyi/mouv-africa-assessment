@@ -1,15 +1,27 @@
-import "./App.css";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Auth from "./pages/Auth";
 
-function App() {
+function AppContent() {
+  const { isAuthenticated, email, logout } = useAuth();
+
+  if (!isAuthenticated) return <Auth />;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-xl shadow-lg">
-        <h1 className="text-3xl font-bold text-blue-600">🚀 Mouv Africa</h1>
-        <p className="text-red-600 mt-2">Tailwind is working!</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <p className="text-lg font-medium">✅ Logged in as {email}</p>
+        <button onClick={logout} className="mt-4 text-sm text-red-600">
+          Log out
+        </button>
       </div>
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
